@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kuiz Interaktif Pendidikan Islam Tahun 3</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 50%, #e0f2fe 100%);
+            min-height: 100vh;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+        }
+        .option-btn {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .option-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+        }
+        .fade-in {
+            animation: fadeIn 0.35s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @media print {
+            body {
+                background: white !important;
+                padding: 0 !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            .glass-card {
+                box-shadow: none !important;
+                border: none !important;
+                background: white !important;
+                padding: 0 !important;
+            }
+            .print-area {
+                display: block !important;
+            }
+        }
+    </style>
+</head>
+<body class="p-3 sm:p-6 md:p-8 flex items-center justify-center min-h-screen">
+
+    <div class="max-w-3xl w-full mx-auto">
+        
+        <!-- Step 1: Borang Maklumat Murid -->
+        <div id="setup-card" class="glass-card rounded-3xl p-6 sm:p-8 md:p-10 shadow-2xl shadow-emerald-900/10 fade-in">
+            <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-20 h-20 bg-emerald-100 text-emerald-700 rounded-3xl mb-4 shadow-inner">
+                    <i data-lucide="book-open-check" class="w-10 h-10"></i>
+                </div>
+                <span class="inline-block px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-xs font-bold uppercase tracking-wide mb-2">KSSR Semakan</span>
+                <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-800">Kuiz Pendidikan Islam Tahun 3</h1>
+                <p class="text-slate-600 text-sm sm:text-base mt-2">Sila isi nama dan kelas anda untuk memulakan kuiz 8 soalan ini.</p>
+            </div>
+
+            <form id="student-form" onsubmit="startQuiz(event)" class="space-y-5">
+                <div>
+                    <label for="student-name" class="block text-sm font-bold text-slate-700 mb-2">Nama Penuh Murid</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-slate-400">
+                            <i data-lucide="user" class="w-5 h-5"></i>
+                        </span>
+                        <input type="text" id="student-name" required placeholder="Contoh: Ahmad Ammar bin Zulkifli" 
+                            class="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition text-slate-800 font-medium">
+                    </div>
+                </div>
+
+                <div>
+                    <label for="student-class" class="block text-sm font-bold text-slate-700 mb-2">Kelas / Tingkatan</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-slate-400">
+                            <i data-lucide="school" class="w-5 h-5"></i>
+                        </span>
+                        <input type="text" id="student-class" required placeholder="Contoh: 3 Ibnu Sina" 
+                            class="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition text-slate-800 font-medium">
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-6 rounded-2xl shadow-xl shadow-emerald-600/30 transition duration-200 flex items-center justify-center gap-2 text-base">
+                    Mula Kuiz Sekarang
+                    <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                </button>
+            </form>
+        </div>
+
+        <!-- Step 2: Kad Soalan Kuiz -->
+        <div id="quiz-card" class="glass-card rounded-3xl p-5 sm:p-8 shadow-2xl shadow-emerald-900/10 hidden fade-in">
+            <!-- Header Kuiz -->
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-100 pb-4 mb-5 gap-3">
+                <div class="flex items-center gap-2">
+                    <span class="p-2 bg-emerald-100 text-emerald-700 rounded-xl">
+                        <i data-lucide="user-check" class="w-4 h-4"></i>
+                    </span>
+                    <span id="display-student-info" class="text-xs sm:text-sm font-bold text-slate-700"></span>
+                </div>
+                <div class="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-full text-xs font-bold text-slate-600">
+                    <i data-lucide="help-circle" class="w-4 h-4 text-emerald-600"></i>
+                    Soalan <span id="current-question-num" class="text-emerald-700 font-black">1</span> / <span id="total-questions">8</span>
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="w-full bg-slate-100 h-3 rounded-full mb-6 overflow-hidden p-0.5 border border-slate-200/60">
+                <div id="progress-bar" class="bg-emerald-500 h-full rounded-full transition-all duration-300" style="width: 12.5%"></div>
+            </div>
+
+            <!-- Label Bidang -->
+            <div class="mb-2">
+                <span id="question-category" class="inline-block px-3 py-1 bg-amber-100 text-amber-800 rounded-lg text-xs font-bold uppercase tracking-wider">
+                    Bidang
+                </span>
+            </div>
+
+            <!-- Teks Soalan -->
+            <h2 id="question-text" class="text-base sm:text-lg md:text-xl font-bold text-slate-800 mb-6 leading-relaxed">
+                Teks soalan...
+            </h2>
+
+            <!-- Pilihan Jawapan -->
+            <div id="options-container" class="space-y-3 mb-6">
+                <!-- Pilihan dikemaskini oleh JS -->
+            </div>
+
+            <!-- Maklum Balas Penjelasan Jawapan -->
+            <div id="feedback-box" class="hidden rounded-2xl p-4 sm:p-5 mb-6 transition-all duration-200">
+                <div class="flex items-start gap-3">
+                    <div id="feedback-icon" class="mt-0.5 shrink-0"></div>
+                    <div>
+                        <h4 id="feedback-title" class="font-extrabold text-sm sm:text-base"></h4>
+                        <p id="feedback-text" class="text-xs sm:text-sm mt-1 text-slate-700 leading-relaxed"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Butang Navigasi Seterusnya -->
+            <div class="flex justify-end">
+                <button id="next-btn" onclick="nextQuestion()" disabled class="bg-slate-200 text-slate-400 font-bold py-3.5 px-6 rounded-2xl cursor-not-allowed transition flex items-center gap-2">
+                    <span>Seterusnya</span>
+                    <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 3: Kad Keputusan / Markah -->
+        <div id="result-card" class="glass-card rounded-3xl p-6 sm:p-10 shadow-2xl shadow-emerald-900/10 hidden text-center fade-in">
+            <div id="result-badge" class="inline-flex items-center justify-center w-24 h-24 rounded-3xl mb-4 shadow-inner">
+                <!-- Icon dinamik -->
+            </div>
+            
+            <h2 id="result-status" class="text-2xl sm:text-3xl font-black text-slate-800 mb-1"></h2>
+            <p id="result-student-detail" class="text-slate-500 font-semibold text-sm sm:text-base mb-6"></p>
+
+            <div class="bg-gradient-to-br from-emerald-50 to-teal-50 border border-emerald-100 rounded-3xl p-6 mb-6 shadow-sm">
+                <div class="text-xs font-extrabold text-emerald-800 uppercase tracking-widest mb-1">Keputusan Akhir</div>
+                <div class="text-4xl sm:text-6xl font-black text-emerald-600 my-2" id="final-score">0%</div>
+                <p id="score-summary" class="text-slate-700 font-bold text-sm sm:text-base mt-2"></p>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-3 no-print">
+                <button onclick="restartQuiz()" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-6 rounded-2xl shadow-lg shadow-emerald-600/30 transition duration-200 flex items-center justify-center gap-2">
+                    <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
+                    Cuba Lagi
+                </button>
+                <button onclick="window.print()" class="flex-1 bg-slate-800 hover:bg-slate-900 text-white font-bold py-3.5 px-6 rounded-2xl shadow-lg transition duration-200 flex items-center justify-center gap-2">
+                    <i data-lucide="printer" class="w-5 h-5"></i>
+                    Cetak / Simpan Keputusan
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Data Soalan Kuiz Pendidikan Islam Tahun 3
+        const questions = [
+            {
+                category: "Bidang Al-Quran",
+                question: "Berapakah jumlah ayat bagi Surah Al-Kafirun?",
+                options: ["5 ayat", "6 ayat", "7 ayat", "8 ayat"],
+                answer: 1,
+                explanation: "Surah Al-Kafirun mengandungi 6 ayat dan merupakan surah Makkiyyah."
+            },
+            {
+                category: "Bidang Tajwid",
+                question: "Pilih contoh hukum Izhar Halqi apabila Nun Sakinah (نْ) bertemu dengan huruf Ha (ح) atau Alif (أ):",
+                options: ["مَنْ آمَنَ / وَمِنْ حَيْثُ", "مَنْ يَقُولُ", "مِنْ بَعْدِ", "عَنْ صَلَاتِهِمْ"],
+                answer: 0,
+                explanation: "Izhar Halqi berlaku apabila Nun Sakinah (نْ) atau Tanwin bertemu dengan salah satu huruf halqi (ء هـ ع ح غ خ). Bacaannya hendaklah jelas tanpa dengung."
+            },
+            {
+                category: "Bidang Akidah",
+                question: "Apakah maksud nama Allah Al-'Alim (العليم)?",
+                options: ["Allah Maha Bijaksana", "Allah Maha Mengetahui", "Allah Maha Mendengar", "Allah Maha Melihat"],
+                answer: 1,
+                explanation: "Al-'Alim bermaksud Allah Maha Mengetahui segala sesuatu sama ada yang nyata mahupun yang tersembunyi."
+            },
+            {
+                category: "Bidang Akidah",
+                question: "Umat Islam wajib beriman kepada kitab-kitab Allah. Berapakah bilangan Kitab Allah yang wajib diketahui?",
+                options: ["3 Kitab", "4 Kitab", "5 Kitab", "10 Kitab"],
+                answer: 1,
+                explanation: "Terdapat 4 Kitab yang wajib diketahui iaitu Taurat, Zabur, Injil, dan Al-Quran."
+            },
+            {
+                category: "Bidang Ibadah",
+                question: "Apakah jenis hadas yang perlu disucikan dengan cara mandi wajib?",
+                options: ["Hadas Kecil", "Hadas Besar", "Najis Mutawassitah", "Najis Mukhaffafah"],
+                answer: 1,
+                explanation: "Hadas Besar perlu disucikan dengan mandi wajib, manakala Hadas Kecil cukuplah dengan berwuduk."
+            },
+            {
+                category: "Bidang Sirah",
+                question: "Wahyu pertama yang diturunkan kepada Nabi Muhammad ﷺ ialah Surah Al-'Alaq (ayat 1-5). Di manakah peristiwa ini berlaku?",
+                options: ["Gua Thawr", "Gua Hira'", "Masjidil Haram", "Kota Madinah"],
+                answer: 1,
+                explanation: "Wahyu pertama diturunkan kepada Nabi Muhammad ﷺ menerusi Malaikat Jibril di Gua Hira'."
+            },
+            {
+                category: "Bidang Adab",
+                question: "Antara berikut, yang manakah merupakan adab sebelum tidur yang diajar oleh Nabi Muhammad ﷺ?",
+                options: [
+                    "Membaca doa tidur & mengibas tempat tidur",
+                    "Makan makanan yang berat sebelum tidur",
+                    "Tidur dalam keadaan lampu terpasang terang",
+                    "Bermain telefon hingga lewat malam"
+                ],
+                answer: 0,
+                explanation: "Sunnah dan adab sebelum tidur termasuklah membasuh kaki, berwuduk, mengibas tempat tidur, dan membaca doa tidur."
+            },
+            {
+                category: "Bidang Hadis & Adab",
+                question: "Mengapakah kita wajib menghormati orang yang lebih tua daripada kita?",
+                options: [
+                    "Supaya mendapat pujian rakan-rakan",
+                    "Untuk mendapat keredhaan Allah dan memupuk kasih sayang",
+                    "Kerana takut dimarahi oleh guru sahaja",
+                    "Supaya diberi wang saku lebih"
+                ],
+                answer: 1,
+                explanation: "Menghormati orang tua merupakan tuntutan agama bagi memupuk kasih sayang dalam masyarakat serta mendapat keredhaan Allah SWT."
+            }
+        ];
+
+        // Pembolehubah State
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let studentName = "";
+        let studentClass = "";
+        let selectedOption = null;
+
+        // Elemen UI
+        const setupCard = document.getElementById('setup-card');
+        const quizCard = document.getElementById('quiz-card');
+        const resultCard = document.getElementById('result-card');
+        
+        const questionCategory = document.getElementById('question-category');
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        const currentQuestionNum = document.getElementById('current-question-num');
+        const totalQuestions = document.getElementById('total-questions');
+        const progressBar = document.getElementById('progress-bar');
+        const displayStudentInfo = document.getElementById('display-student-info');
+        
+        const feedbackBox = document.getElementById('feedback-box');
+        const feedbackTitle = document.getElementById('feedback-title');
+        const feedbackText = document.getElementById('feedback-text');
+        const feedbackIcon = document.getElementById('feedback-icon');
+        const nextBtn = document.getElementById('next-btn');
+
+        function startQuiz(event) {
+            event.preventDefault();
+            
+            studentName = document.getElementById('student-name').value.trim();
+            studentClass = document.getElementById('student-class').value.trim();
+
+            if(!studentName || !studentClass) return;
+
+            displayStudentInfo.textContent = `${studentName} | ${studentClass}`;
+            totalQuestions.textContent = questions.length;
+
+            setupCard.classList.add('hidden');
+            quizCard.classList.remove('hidden');
+
+            currentQuestionIndex = 0;
+            score = 0;
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            selectedOption = null;
+            feedbackBox.classList.add('hidden');
+            nextBtn.disabled = true;
+            nextBtn.className = "bg-slate-200 text-slate-400 font-bold py-3.5 px-6 rounded-2xl cursor-not-allowed transition flex items-center gap-2";
+
+            const q = questions[currentQuestionIndex];
+            questionCategory.textContent = q.category;
+            questionText.textContent = `${currentQuestionIndex + 1}. ${q.question}`;
+            currentQuestionNum.textContent = currentQuestionIndex + 1;
+            
+            const progressPercent = ((currentQuestionIndex + 1) / questions.length) * 100;
+            progressBar.style.width = `${progressPercent}%`;
+
+            optionsContainer.innerHTML = '';
+            q.options.forEach((option, index) => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = `option-btn w-full text-left p-4 rounded-2xl border-2 border-slate-200/80 bg-white hover:border-emerald-400 hover:bg-emerald-50/50 font-medium text-slate-700 flex items-center justify-between transition-all shadow-sm`;
+                btn.onclick = () => selectOption(index);
+                btn.innerHTML = `
+                    <span class="flex items-center gap-3">
+                        <span class="w-8 h-8 rounded-xl bg-slate-100 border border-slate-200 text-slate-600 flex items-center justify-center font-bold text-xs shrink-0">${String.fromCharCode(65 + index)}</span>
+                        <span class="text-sm sm:text-base font-semibold text-slate-800">${option}</span>
+                    </span>
+                    <span class="icon-placeholder shrink-0"></span>
+                `;
+                optionsContainer.appendChild(btn);
+            });
+
+            if (currentQuestionIndex === questions.length - 1) {
+                nextBtn.innerHTML = `<span>Lihat Keputusan</span> <i data-lucide="check-circle" class="w-5 h-5"></i>`;
+            } else {
+                nextBtn.innerHTML = `<span>Seterusnya</span> <i data-lucide="chevron-right" class="w-5 h-5"></i>`;
+            }
+            lucide.createIcons();
+        }
+
+        function selectOption(index) {
+            if (selectedOption !== null) return;
+            selectedOption = index;
+
+            const q = questions[currentQuestionIndex];
+            const isCorrect = (index === q.answer);
+            const buttons = optionsContainer.children;
+
+            if (isCorrect) {
+                score++;
+            }
+
+            Array.from(buttons).forEach((btn, idx) => {
+                btn.disabled = true;
+                if (idx === q.answer) {
+                    btn.className = "w-full text-left p-4 rounded-2xl border-2 border-emerald-500 bg-emerald-50/90 font-semibold text-emerald-900 flex items-center justify-between shadow-sm";
+                    btn.querySelector('.icon-placeholder').innerHTML = `<i data-lucide="check-circle-2" class="w-6 h-6 text-emerald-600"></i>`;
+                } else if (idx === index && !isCorrect) {
+                    btn.className = "w-full text-left p-4 rounded-2xl border-2 border-rose-500 bg-rose-50/90 font-semibold text-rose-900 flex items-center justify-between shadow-sm";
+                    btn.querySelector('.icon-placeholder').innerHTML = `<i data-lucide="x-circle" class="w-6 h-6 text-rose-600"></i>`;
+                } else {
+                    btn.className = "w-full text-left p-4 rounded-2xl border border-slate-200 bg-slate-50/60 text-slate-400 flex items-center justify-between opacity-50";
+                }
+            });
+
+            feedbackBox.classList.remove('hidden');
+            if (isCorrect) {
+                feedbackBox.className = "rounded-2xl p-4 sm:p-5 mb-6 bg-emerald-50 border border-emerald-200 text-emerald-900 fade-in";
+                feedbackIcon.innerHTML = `<i data-lucide="sparkles" class="w-6 h-6 text-emerald-600"></i>`;
+                feedbackTitle.textContent = "Tahniah! Jawapan Anda Tepat.";
+            } else {
+                feedbackBox.className = "rounded-2xl p-4 sm:p-5 mb-6 bg-rose-50 border border-rose-200 text-rose-900 fade-in";
+                feedbackIcon.innerHTML = `<i data-lucide="alert-circle" class="w-6 h-6 text-rose-600"></i>`;
+                feedbackTitle.textContent = "Jawapan Kurang Tepat.";
+            }
+            feedbackText.textContent = q.explanation;
+
+            nextBtn.disabled = false;
+            nextBtn.className = "bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-6 rounded-2xl shadow-lg shadow-emerald-600/30 transition duration-200 flex items-center gap-2 cursor-pointer";
+            
+            lucide.createIcons();
+        }
+
+        function nextQuestion() {
+            if (currentQuestionIndex < questions.length - 1) {
+                currentQuestionIndex++;
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function showResults() {
+            quizCard.classList.add('hidden');
+            resultCard.classList.remove('hidden');
+
+            const percentage = Math.round((score / questions.length) * 100);
+            
+            document.getElementById('result-student-detail').textContent = `Nama: ${studentName} | Kelas: ${studentClass}`;
+            document.getElementById('final-score').textContent = `${percentage}%`;
+            document.getElementById('score-summary').textContent = `Tahniah! Anda berjaya menjawab ${score} daripada ${questions.length} soalan dengan betul.`;
+
+            const badge = document.getElementById('result-badge');
+            const status = document.getElementById('result-status');
+
+            if (percentage >= 80) {
+                badge.className = "inline-flex items-center justify-center w-24 h-24 rounded-3xl mb-4 bg-emerald-100 text-emerald-600";
+                badge.innerHTML = `<i data-lucide="trophy" class="w-12 h-12"></i>`;
+                status.textContent = "Mumtaz! Cemerlang!";
+            } else if (percentage >= 50) {
+                badge.className = "inline-flex items-center justify-center w-24 h-24 rounded-3xl mb-4 bg-amber-100 text-amber-600";
+                badge.innerHTML = `<i data-lucide="award" class="w-12 h-12"></i>`;
+                status.textContent = "Jayyid! Syabas!";
+            } else {
+                badge.className = "inline-flex items-center justify-center w-24 h-24 rounded-3xl mb-4 bg-rose-100 text-rose-600";
+                badge.innerHTML = `<i data-lucide="refresh-cw" class="w-12 h-12"></i>`;
+                status.textContent = "Boleh Cuba Lagi!";
+            }
+
+            lucide.createIcons();
+        }
+
+        function restartQuiz() {
+            resultCard.classList.add('hidden');
+            setupCard.classList.remove('hidden');
+            document.getElementById('student-form').reset();
+        }
+
+        window.onload = function() {
+            lucide.createIcons();
+        };
+    </script>
+</body>
+</html>
